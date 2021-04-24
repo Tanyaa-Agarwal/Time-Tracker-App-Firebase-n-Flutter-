@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:time_tracker_app/app/sign_in/validators.dart';
 import 'package:time_tracker_app/common_widgets/form_submit_button.dart';
+import 'package:time_tracker_app/common_widgets/platform_alert_dialog.dart';
 import 'package:time_tracker_app/services/auth.dart';
+import 'package:time_tracker_app/common_widgets/platform_alert_dialog.dart';
+import 'dart:io';
 enum EmailSignInFormType {signIn,register}
 class EmailSignInForm extends StatefulWidget with EmailAndPasswordValidators{
   EmailSignInForm({@required this.auth});
@@ -35,7 +38,12 @@ class _EmailSignInFormState extends State<EmailSignInForm> {
       }
       Navigator.of(context).pop();
     }catch(e){
-      print(e.toString());
+   PlatformAlertDialog(
+     title: 'Sign in failed',
+     content: e.toString(),
+     defaultActionText: 'OK',
+   ).show(context);
+
     }finally{
       setState(() {
         _isLoading=false;
