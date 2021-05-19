@@ -5,8 +5,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 class Uuser{
-  Uuser({@required this.uid});
+  Uuser({@required this.uid,@required this.photoUrl,@required this.displayName});
   final String uid;
+  final String photoUrl;
+  final String displayName;
 }
 abstract class AuthBase{
   Future<Uuser> currentUser();
@@ -23,7 +25,11 @@ class Auth implements AuthBase{
   Uuser _userFromFirebase(User user){
     if(user==null)
       return null;
-    return Uuser(uid: user.uid);
+    return Uuser(
+        uid: user.uid,
+    photoUrl: user.photoUrl,
+    displayName: user.displayName,
+    );
   }
   @override
   Stream<Uuser> get onAuthStateChanged{

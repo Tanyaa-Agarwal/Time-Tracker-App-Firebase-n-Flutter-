@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:time_tracker_app/app/sign_in/email_sign_in_page.dart';
+import 'package:time_tracker_app/app/sign_in/SignInManager.dart';
 import 'package:time_tracker_app/app/sign_in/social_sign_in_button.dart';
 import 'package:time_tracker_app/app/sign_in/sign_in_button.dart';
 
@@ -9,54 +10,44 @@ import 'package:time_tracker_app/common_widgets/platform_exception_alert_dialog.
 import 'package:time_tracker_app/services/auth.dart';
 
 
-class SignInPage extends StatefulWidget {
-  @override
-  _SignInPageState createState() => _SignInPageState();
-}
-
-class _SignInPageState extends State<SignInPage> {
-  bool _isLoading=false;
+class SignInPage extends StatelessWidget {
+  const SignInPage({Key key,@required this.manager,@required this.isLoading}):super(key: key);
+  final SignInManager manager;
+  final bool isLoading;
+  static Widget create(BuildContext context){
+    final auth=Provider.of<AuthBase>(context);
+    return ChangeNotifierProvider<ValueNotifier<bool>>(
+      create: (_) => ValueNotifier<bool>(false),
+      child: Consumer<ValueNotifier<bool>>(
+        builder: (_,ValueNotifier<bool>isLoading,__) => Provider<SignInManager>(
+          create: (_) => SignInManager(auth: auth,isLoading: isLoading),
+          child: Consumer<SignInManager>(
+            builder: (context,manager,_)=>SignInPage(manager: manager,
+            isLoading: isLoading.value,),),
+        ),
+      ),
+    );
+  }
 void _showSignInError(BuildContext context,PlatformException exception ){
   PlatformExceptionAlertDialog(title: 'Sign in failed', exception: exception).show(context);
 }
 
   Future<void> _signInAnonymously(BuildContext context) async{
     try {
-      setState(() {
-        _isLoading=true;
-      });
-      final auth=Provider.of<AuthBase>(context,listen: false);
-     await auth.signInAnonymously();
-      setState(() {
-        _isLoading=false;
-      });
+     await manager.signInAnonymously();
     }on PlatformException catch(e){
       if(e.code!='ERROR_ABORTED_BY_USER')
       _showSignInError(context, e);
-    }finally{
-      setState(() {
-        _isLoading=false;
-      });
     }
   }
 
   Future<void> _signInWithGoogle(BuildContext context) async {
     try {
-      setState(() {
-        _isLoading=true;
-      });
-      final auth=Provider.of<AuthBase>(context,listen: false);
-      await auth.signInWithGoogle();
-      setState(() {
-        _isLoading=false;
-      });
+
+      await manager.signInWithGoogle();
     } on PlatformException catch (e) {
       if(e.code!='ERROR_ABORTED_BY_USER')
       _showSignInError(context, e);
-    }finally{
-      setState(() {
-        _isLoading=false;
-      });
     }
   }
 
@@ -80,7 +71,7 @@ void _showSignInError(BuildContext context,PlatformException exception ){
         ),
         elevation: 2.0,
       ),
-      body: _buildContent(context),
+      body:  _buildContent(context),
     );
   }
 
@@ -103,7 +94,7 @@ void _showSignInError(BuildContext context,PlatformException exception ){
            text:'Sign in with Google' ,
            colour: Colors.white,
            textColour: Colors.black87,
-           onPressed:_isLoading?null:()=> _signInWithGoogle(context),
+           onPressed:isLoading?null:()=> _signInWithGoogle(context),
          ),
           SizedBox(
             height: 8.0,
@@ -122,7 +113,7 @@ void _showSignInError(BuildContext context,PlatformException exception ){
             text: 'Sign in with email',
             textColour: Colors.white,
             colour: Colors.teal[700],
-            onPressed:_isLoading?null: () => _signInWithEmail(context),
+            onPressed:isLoading?null: () => _signInWithEmail(context),
           ),
           SizedBox(
             height: 8.0,
@@ -142,14 +133,14 @@ void _showSignInError(BuildContext context,PlatformException exception ){
             text: 'Go anonymous',
             textColour: Colors.black87,
             colour: Colors.lime[300],
-            onPressed:_isLoading?null:() =>_signInAnonymously(context),
+            onPressed:isLoading?null:() =>_signInAnonymously(context),
           ),
     ],
       ),
     );
   }
   Widget _buildHeader(){
-  if(_isLoading){
+  if(isLoading){
     return Center(
       child: CircularProgressIndicator(),
     );
